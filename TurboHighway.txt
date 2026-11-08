@@ -57,7 +57,7 @@
     ? 'rgb(' + (c[0] | 0) + ',' + (c[1] | 0) + ',' + (c[2] | 0) + ')'
     : 'rgba(' + (c[0] | 0) + ',' + (c[1] | 0) + ',' + (c[2] | 0) + ',' + a + ')');
   const shade = (c, f) => [Math.min(255, c[0] * f), Math.min(255, c[1] * f), Math.min(255, c[2] * f)];
-  const thousands = (n) => String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const thousands = (n) => String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, (typeof cfg !== 'undefined' && cfg.lang === 'en') ? ',' : '.');
 
   // ------------------------------------------------------------------
   //  Constantes del motor pseudo-3D
@@ -251,11 +251,12 @@
   // ------------------------------------------------------------------
   // Música de fondo generada con WebAudio (suave, un tema por mapa)
   // Ajustes del jugador (se guardan en el navegador)
-  const CFG_DEF = { vol: 1, music: 1, skid: true, weather: true, shake: true, names: true, rain: 0.28, snow: 0.22 };
+  const CFG_DEF = { vol: 1, music: 1, skid: true, weather: true, shake: true, names: true, rain: 0.28, snow: 0.22, lang: 'es' };
   const cfg = Object.assign({}, CFG_DEF);
   try {
     const rc = JSON.parse(window.localStorage.getItem('turbo_highway_cfg') || 'null');
     if (rc && typeof rc === 'object') {
+      if (rc.lang === 'en' || rc.lang === 'es') cfg.lang = rc.lang;
       if (typeof rc.vol === 'number' && isFinite(rc.vol)) cfg.vol = Math.max(0, Math.min(1, rc.vol));
       if (typeof rc.music === 'number' && isFinite(rc.music)) cfg.music = Math.max(0, Math.min(1, rc.music));
       ['rain', 'snow'].forEach(function (k) { if (typeof rc[k] === 'number' && isFinite(rc[k])) cfg[k] = Math.max(0, Math.min(1, rc[k])); });
@@ -264,6 +265,292 @@
     }
   } catch (e) { /* ignorar */ }
   function saveCfg() { try { window.localStorage.setItem('turbo_highway_cfg', JSON.stringify(cfg)); } catch (e) { /* ignorar */ } }
+  // ------------------------------------------------------------------
+  //  Idioma (español / inglés): los textos se escriben en español y se traducen al dibujarlos
+  // ------------------------------------------------------------------
+  const I18N_EN = [
+    ["Ya tienes la velocidad al máximo", "Your speed is already maxed out"],
+    ["Te faltan", "You are missing"],
+    ["monedas", "coins"],
+    ["¡Mejora comprada!", "Upgrade bought!"],
+    ["Escribe un código primero", "Type a code first"],
+    ["Ese código ya está activado", "That code is already active"],
+    ["¡Código activado: monedas infinitas!", "Code activated: infinite coins!"],
+    ["Código no válido", "Invalid code"],
+    ["Autopista elevada del año 2099", "Elevated highway of the year 2099"],
+    ["Autopista", "Highway"],
+    ["Carretera entre bosques y montañas", "Road through forests and mountains"],
+    ["Día, atardecer y noche", "Day, sunset and night"],
+    ["Neo Ciudad", "Neo City"],
+    ["Rascacielos de neón y arcos de luz", "Neon skyscrapers and light arches"],
+    ["Desierto", "Desert"],
+    ["Ruta 66 entre mesas y cactus", "Route 66 between mesas and cacti"],
+    ["Sol abrasador, atardecer y estrellas", "Scorching sun, sunset and stars"],
+    ["Árido", "Arid"],
+    ["Gran Premio", "Grand Prix"],
+    ["Circuito de F1 con horquillas y eses", "F1 circuit with hairpins and esses"],
+    ["Gradas, muros de neumáticos y focos", "Grandstands, tyre walls and floodlights"],
+    ["Naturaleza", "Nature"],
+    ["Futurista", "Futuristic"],
+    ["Circuito", "Circuit"],
+    ["Ambiente", "Setting"],
+    ["Longitud", "Length"],
+    ["Dificultad", "Difficulty"],
+    ["Rojo Racing", "Red Racing"],
+    ["El clásico de competición", "The racing classic"],
+    ["Azul Eléctrico", "Electric Blue"],
+    ["Doble franja amarilla", "Double yellow stripe"],
+    ["Verde Neón", "Neon Green"],
+    ["Veneno radiactivo", "Radioactive venom"],
+    ["Amarillo Rally", "Rally Yellow"],
+    ["Se ve desde el espacio", "Visible from space"],
+    ["Negro Fantasma", "Phantom Black"],
+    ["Neón magenta bajo el chasis", "Magenta neon under the chassis"],
+    ["Naranja Dakar", "Dakar Orange"],
+    ["Para los más aventureros", "For the most adventurous"],
+    ["Blanco Perla", "Pearl White"],
+    ["Berlina elegante sin alerón", "Elegant sedan without spoiler"],
+    ["Rosa Retro", "Retro Pink"],
+    ["Estilo synthwave", "Synthwave style"],
+    ["Oro Imperial", "Imperial Gold"],
+    ["Edición de lujo", "Luxury edition"],
+    ["Policía", "Police"],
+    ["NINGUNAS", "None"],
+    ["CENTRAL", "Center"],
+    ["DOBLE", "Double"],
+    ["TRIPLE FINA", "Thin triple"],
+    ["BORDES", "Edges"],
+    ["BRILLANTE", "Glossy"],
+    ["METALIZADO", "Metallic"],
+    ["MATE", "Matte"],
+    ["MALLA", "Mesh"],
+    ["DISCO", "Disc"],
+    ["TURBINA", "Turbine"],
+    ["EUROPEA", "European"],
+    ["AMARILLA", "Yellow"],
+    ["NEGRA", "Black"],
+    ["¡MÁS POLICÍAS!", "MORE COPS!"],
+    ["Nivel de búsqueda", "Wanted level"],
+    ["FÁCIL", "EASY"],
+    ["MEDIO", "MEDIUM"],
+    ["DIFÍCIL", "HARD"],
+    ["DESPEJADO", "CLEAR"],
+    ["LLUVIA", "RAIN"],
+    ["NIEVE", "SNOW"],
+    ["VUELTA", "LAP"],
+    ["puntos", "points"],
+    ["segundos", "seconds"],
+    ["¡HUYE!", "RUN!"],
+    ["La policía te persigue", "The police are chasing you"],
+    ["¡YA!", "GO!"],
+    ["SALIDA / META", "START / FINISH"],
+    ["ARRESTO", "BUSTED"],
+    ["¡TE ESTÁN ALCANZANDO!", "THEY ARE CATCHING UP!"],
+    ["EN FUGA", "ON THE RUN"],
+    ["TIEMPO AGOTADO", "TIME UP"],
+    ["TIEMPO", "TIME"],
+    ["Tiempo en fuga", "Time on the run"],
+    ["RÉCORD", "RECORD"],
+    ["CARRERA ARCADE CONTRA EL RELOJ", "ARCADE RACING AGAINST THE CLOCK"],
+    ["MODOS", "MODES"],
+    ["individual", "single player"],
+    ["2 personas", "2 players"],
+    ["persecución policial", "police chase"],
+    ["PERSEGUIDA POLICIAL", "POLICE CHASE"],
+    ["MULTIJUGADOR", "MULTIPLAYER"],
+    ["2 jugadores", "2 players"],
+    ["pantalla dividida en el mismo ordenador", "split screen on the same computer"],
+    ["pantalla dividida", "split screen"],
+    ["GARAJE", "GARAGE"],
+    ["Coche", "Car"],
+    ["Mapa actual", "Current map"],
+    ["MAPAS", "MAPS"],
+    ["MAPA", "MAP"],
+    ["TIENDA", "SHOP"],
+    ["Velocidad máxima", "Top speed"],
+    ["Velocidad", "Speed"],
+    ["CONTROLES", "CONTROLS"],
+    ["Cómo se juega", "How to play"],
+    ["Sonido, efectos y más", "Sound, effects and more"],
+    ["AJUSTES DE PARTIDA", "GAME SETTINGS"],
+    ["AJUSTES", "SETTINGS"],
+    ["sonido", "sound"],
+    ["sí", "yes"],
+    ["no", "no"],
+    ["Haz clic en el juego para activar el teclado", "Click on the game to enable the keyboard"],
+    ["CONDUCCIÓN", "DRIVING"],
+    ["Acelerar (la cámara se aleja)", "Accelerate (camera pulls back)"],
+    ["Frenar (la cámara se acerca)", "Brake (camera moves closer)"],
+    ["ESPACIO", "SPACE"],
+    ["Nitro (gasta la barra azul)", "Nitro (uses the blue bar)"],
+    ["CONSEJOS", "TIPS"],
+    ["Cruza los checkpoints para ganar tiempo", "Cross checkpoints to gain time"],
+    ["Esquiva el tráfico; rozar coches da puntos y nitro", "Dodge traffic; grazing cars gives points and nitro"],
+    ["Salirte de la carretera te frena", "Leaving the road slows you down"],
+    ["Reiniciar la partida", "Restart the game"],
+    ["Volver al menú", "Back to the menu"],
+    ["Sonido sí / no", "Sound on / off"],
+    ["Garaje (skins)", "Garage (skins)"],
+    ["Claxon (pitar)", "Horn (honk)"],
+    ["Primera persona (1 jugador)", "First person (1 player)"],
+    ["Pausa / cerrar el juego", "Pause / close the game"],
+    ["JUEGO", "GAME"],
+    ["Girar", "Steer"],
+    ["PAUSA", "PAUSE"],
+    ["Salir", "Quit"],
+    ["VOLVER", "BACK"],
+    ["Elige cómo quieres jugar", "Choose how you want to play"],
+    ["tú contra el reloj", "you vs the clock"],
+    ["elige la dificultad", "choose the difficulty"],
+    ["Escapa de la policía el mayor tiempo posible", "Escape the police for as long as possible"],
+    ["Policía lenta y poca", "Slow, few police"],
+    ["Policía a buen ritmo", "Police at a good pace"],
+    ["Policía rápida y numerosa", "Fast, numerous police"],
+    ["al inicio", "at start"],
+    ["por checkpoint", "per checkpoint"],
+    ["cambia la dificultad", "changes difficulty"],
+    ["continúa", "continues"],
+    ["continuar", "continue"],
+    ["Personaliza el juego a tu gusto", "Customize the game your way"],
+    ["se guarda solo", "saves automatically"],
+    ["JUGADOR", "PLAYER"],
+    ["Tu nombre", "Your name"],
+    ["Clic para escribir", "Click to type"],
+    ["Volumen general", "Master volume"],
+    ["Música", "Music"],
+    ["Sonido activado", "Sound on"],
+    ["Silencia todo el juego (tecla M)", "Mutes the whole game (M key)"],
+    ["VISTA", "VIEW"],
+    ["Empezar en 1ª persona", "Start in 1st person"],
+    ["Si no, empiezas viendo el coche desde fuera", "Otherwise you see the car from outside"],
+    ["EFECTOS", "EFFECTS"],
+    ["Marcas de frenado", "Skid marks"],
+    ["Huellas de las ruedas en el asfalto", "Tyre tracks on the asphalt"],
+    ["Lluvia y nieve", "Rain and snow"],
+    ["Si lo apagas, el clima no se dibuja", "If off, the weather is not drawn"],
+    ["Sacudida de cámara", "Camera shake"],
+    ["Al chocar o ir muy rápido", "When crashing or going very fast"],
+    ["Nombres sobre los coches", "Names above cars"],
+    ["El nombre del piloto encima del coche", "The driver's name above the car"],
+    ["CLIMA ALEATORIO", "RANDOM WEATHER"],
+    ["Prob. de lluvia", "Rain chance"],
+    ["Prob. de nieve", "Snow chance"],
+    ["se sortea solo al empezar cada partida", "picked automatically at the start of each game"],
+    ["PANTALLA COMPLETA", "FULLSCREEN"],
+    ["RESTABLECER", "RESET"],
+    ["LISTO", "DONE"],
+    ["IDIOMA", "LANGUAGE"],
+    ["MEJORAS", "UPGRADES"],
+    ["Nivel", "Level"],
+    ["MÁX", "MAX"],
+    ["MÁXIMO", "MAXED"],
+    ["COMPRAR", "BUY"],
+    ["Tu velocidad", "Your speed"],
+    ["con nitro hasta", "with nitro up to"],
+    ["con nitro", "with nitro"],
+    ["LÍMITE", "LIMIT"],
+    ["por vuelta", "per lap"],
+    ["según la dificultad", "depending on difficulty"],
+    ["En 2 jugadores no se ganan monedas ni cuentan las mejoras", "In 2-player mode no coins are earned and upgrades don't count"],
+    ["CÓDIGOS", "CODES"],
+    ["Haz clic y escribe un código…", "Click and type a code…"],
+    ["CANJEAR", "REDEEM"],
+    ["Monedas infinitas activadas", "Infinite coins activated"],
+    ["monedas ganadas", "coins earned"],
+    ["¿CÓMO TE LLAMAS?", "WHAT IS YOUR NAME?"],
+    ["Tu nombre aparecerá sobre tu coche", "Your name will appear above your car"],
+    ["Escribe tu nombre", "Type your name"],
+    ["ELIGE TU VISTA", "CHOOSE YOUR VIEW"],
+    ["Ves tu coche desde fuera", "See your car from outside"],
+    ["Conduces dentro del coche", "Drive from inside the car"],
+    ["cambia la vista", "changes the view"],
+    ["la cambia en carrera", "switches it in race"],
+    ["¡A CORRER!", "LET'S RACE!"],
+    ["Dos jugadores en el mismo ordenador", "Two players on the same computer"],
+    ["gana quien consiga más puntos", "whoever scores most wins"],
+    ["SHIFT DER.", "SHIFT RIGHT"],
+    ["Nombre (opcional)", "Name (optional)"],
+    ["PERSONALIZAR", "CUSTOMIZE"],
+    ["MOVER", "MOVE"],
+    ["GANA EL JUGADOR", "WINNER: PLAYER"],
+    ["¡EMPATE!", "DRAW!"],
+    ["Puntuación", "Score"],
+    ["REVANCHA", "REMATCH"],
+    ["MENÚ", "MENU"],
+    ["Esperando al otro jugador…", "Waiting for the other player…"],
+    ["personaliza tu coche", "customize your car"],
+    ["Personaliza tu coche: ruedas, luces, matrícula y más", "Customize your car: wheels, lights, plate and more"],
+    ["Modificado por ti", "Modified by you"],
+    ["Arrastra con el ratón para girar el coche", "Drag with the mouse to rotate the car"],
+    ["PINTURA", "PAINT"],
+    ["RUEDAS", "WHEELS"],
+    ["LUCES", "LIGHTS"],
+    ["MATRÍCULA ALEATORIA", "RANDOM PLATE"],
+    ["MATRÍCULA", "PLATE"],
+    ["FRANJAS", "STRIPES"],
+    ["ESTILO DE LLANTA", "RIM STYLE"],
+    ["COLOR DE LLANTA", "RIM COLOR"],
+    ["LLANTAS CON LUZ", "GLOWING RIMS"],
+    ["La luz usa el color de la llanta", "The glow uses the rim color"],
+    ["FAROS DELANTEROS", "HEADLIGHTS"],
+    ["LUCES TRASERAS", "TAIL LIGHTS"],
+    ["NEÓN BAJO EL COCHE", "UNDERGLOW NEON"],
+    ["Las luces se ven al frenar y en el garaje", "Lights show when braking and in the garage"],
+    ["TU MATRÍCULA", "YOUR PLATE"],
+    ["Escribe… (ENTER para terminar)", "Type… (ENTER to finish)"],
+    ["Clic aquí y escribe el texto", "Click here and type the text"],
+    ["ESTILO", "STYLE"],
+    ["Hasta 8 caracteres: letras, números y guion", "Up to 8 characters: letters, numbers and dash"],
+    ["CARROCERÍA", "BODY"],
+    ["BERLINA", "SEDAN"],
+    ["DEPORTIVO", "SPORTS"],
+    ["ALERÓN", "SPOILER"],
+    ["ACABADO", "FINISH"],
+    ["PLANTILLAS", "PRESETS"],
+    ["ALEATORIO", "RANDOM"],
+    ["cambiar plantilla", "change preset"],
+    ["cambiar", "change"],
+    ["Elige dónde correr", "Choose where to race"],
+    ["SELECCIONADO", "SELECTED"],
+    ["REINICIAR", "RESTART"],
+    ["Haz clic en esta pantalla para recuperar el teclado", "Click this screen to get the keyboard back"],
+    ["¡ARRESTADO!", "BUSTED!"],
+    ["¡NUEVO RÉCORD!", "NEW RECORD!"],
+    ["jugar de nuevo", "play again"],
+    ["Distancia", "Distance"],
+    ["Vueltas", "Laps"],
+    ["Adelantamientos", "Overtakes"],
+    ["clic", "click"]
+  ];
+  let trMap = null, trRe = null, trCache = Object.create(null), trN = 0;
+  function buildTr() {
+    trCache = Object.create(null); trN = 0; trMap = null; trRe = null;
+    if (cfg.lang !== 'en') return;
+    trMap = Object.create(null);
+    const keys = [];
+    for (let i = 0; i < I18N_EN.length; i++) { const k = I18N_EN[i][0].toLowerCase(); trMap[k] = I18N_EN[i][1]; keys.push(k); }
+    keys.sort(function (a, b) { return b.length - a.length; });
+    trRe = new RegExp('(?<![\\p{L}\\p{N}])(?:' + keys.map(function (k) { return k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')(?![\\p{L}\\p{N}])', 'giu');
+  }
+  function trCase(m, t) {
+    if (m === m.toUpperCase() && m !== m.toLowerCase()) return t.toUpperCase();
+    if (t === t.toUpperCase() && t !== t.toLowerCase()) t = t.toLowerCase();
+    const f = m.charAt(0);
+    if (f !== f.toLowerCase()) return t.charAt(0).toUpperCase() + t.slice(1);
+    if (f !== f.toUpperCase()) return t.charAt(0).toLowerCase() + t.slice(1);
+    return t;
+  }
+  function tr(s) {
+    if (!trRe || typeof s !== 'string' || s.length < 2) return s;
+    let c = trCache[s];
+    if (c !== undefined) return c;
+    c = s.replace(trRe, function (m) { const t = trMap[m.toLowerCase()]; return t === undefined ? m : trCase(m, t); });
+    if (trN > 600) { trCache = Object.create(null); trN = 0; }
+    trCache[s] = c; trN++;
+    return c;
+  }
+  function setLang(l) { cfg.lang = l === 'en' ? 'en' : 'es'; buildTr(); saveCfg(); }
+  buildTr();
   // Monedas y tienda (se guardan en el navegador)
   const BASE_KMH = 200, KMH_STEP = 20, MAX_LVL = 10, NITRO_MULT = 1.25, ABS_MAX_KMH = 500;
   const UPG_COST = [60, 120, 200, 300, 420, 560, 720, 900, 1100, 1350];
@@ -1233,6 +1520,7 @@
   function drawTag(text, x, y, fs) {
     ctx.save(); ctx.globalAlpha = 0.9; ctx.lineJoin = 'round';
     ctx.font = 'bold ' + fs + 'px "Segoe UI","Helvetica Neue",Arial,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    text = tr(text);
     ctx.lineWidth = Math.max(2, fs * 0.28); ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.strokeText(text, x, y);
     ctx.fillStyle = '#ffffff'; ctx.fillText(text, x, y);
     ctx.restore();
@@ -1660,6 +1948,7 @@
     ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.lineTo(x3, y3); ctx.lineTo(x4, y4); ctx.closePath(); ctx.fill();
   }
   function txt(s, x, y, size, color, align, weight, italic) {
+    s = tr(s);
     ctx.font = (italic === false ? '' : 'italic ') + (weight || 'bold') + ' ' + size + 'px "Segoe UI","Helvetica Neue",Arial,sans-serif';
     ctx.textAlign = align || 'left'; ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillText(s, x + size * 0.05, y + size * 0.06);
@@ -2214,7 +2503,7 @@
     if (hw > 55) {
       ctx.font = 'italic 900 ' + (bh * 0.46) + 'px Arial,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillStyle = T([255, 255, 255], vis, 1);
-      ctx.fillText(start ? 'SALIDA / META' : 'CHECKPOINT', cx, sy - gh + bh * 0.36);
+      ctx.fillText(start ? tr('SALIDA / META') : 'CHECKPOINT', cx, sy - gh + bh * 0.36);
     }
     if (start && hw > 40) {
       const sq = bh * 0.12, nsq = Math.floor(2 * px / sq);
@@ -2820,6 +3109,7 @@
   }
   // ---- Pantalla de controles ----------------------------------------------
   function keycap(label, x, y, ui) {
+    label = tr(label);
     const fs = 14 * ui;
     ctx.font = 'bold ' + fs + 'px "Segoe UI","Helvetica Neue",Arial,sans-serif';
     const tw = (ctx.measureText(label) || { width: 8 * label.length }).width, w = Math.max(30 * ui, tw + 20 * ui), h = 30 * ui;
@@ -2966,7 +3256,7 @@
     dim(0.68);
     const ox = (W - 1280 * ui) / 2, oy = (H - 720 * ui) / 2;
     const X = (v) => ox + v * ui, Y = (v) => oy + (v + 30) * ui;
-    panel(X(140), Y(-18), 1000 * ui, 590 * ui, ui);
+    panel(X(140), Y(-18), 1000 * ui, 650 * ui, ui);
     txt('AJUSTES', X(640), Y(60), 44 * ui, '#ffffff', 'center', '900');
     txt('Personaliza el juego a tu gusto · se guarda solo', X(640), Y(84), 14 * ui, '#cfe0ff', 'center', 'bold', false);
     const x0 = X(180), w0 = 440 * ui, x1 = X(660), w1 = 440 * ui;
@@ -2985,6 +3275,9 @@
     toggleRow('Sonido activado', 'Silencia todo el juego (tecla M)', !Sound.muted, x0, Y(314), w0, ui, function () { Sound.init(); Sound.resume(); Sound.toggleMute(); });
     txt('VISTA', x0, Y(366), 12 * ui, '#ffb347', 'left', '900', false);
     toggleRow('Empezar en 1ª persona', 'Si no, empiezas viendo el coche desde fuera', viewPref === 'first', x0, Y(398), w0, ui, function () { viewPref = viewPref === 'first' ? 'third' : 'first'; try { window.localStorage.setItem('turbo_highway_view', viewPref); } catch (e) { /* ignorar */ } });
+    txt('IDIOMA', x0, Y(460), 12 * ui, '#ffb347', 'left', '900', false);
+    button('Español', x0, Y(472), 210 * ui, 40 * ui, ui, function () { setLang('es'); }, cfg.lang !== 'en');
+    button('English', x0 + 230 * ui, Y(472), 210 * ui, 40 * ui, ui, function () { setLang('en'); }, cfg.lang === 'en');
     // --- columna derecha ---
     txt('EFECTOS', x1, Y(112), 12 * ui, '#ffb347', 'left', '900', false);
     toggleRow('Marcas de frenado', 'Huellas de las ruedas en el asfalto', cfg.skid, x1, Y(152), w1, ui, function () { cfg.skid = !cfg.skid; });
@@ -2995,9 +3288,9 @@
     slider('Prob. de lluvia', cfg.rain, x1, Y(376), w1, ui, function (v) { cfg.rain = v; if (cfg.rain + cfg.snow > 1) cfg.snow = 1 - cfg.rain; }, 150);
     slider('Prob. de nieve', cfg.snow, x1, Y(420), w1, ui, function (v) { cfg.snow = v; if (cfg.rain + cfg.snow > 1) cfg.rain = 1 - cfg.snow; }, 150);
     txt('Despejado: ' + Math.round(Math.max(0, 1 - cfg.rain - cfg.snow) * 100) + '%  ·  se sortea solo al empezar cada partida', x1, Y(448), 11.5 * ui, '#7f95b8', 'left', 'bold', false);
-    button('PANTALLA COMPLETA', X(300), Y(486), 220 * ui, 40 * ui, ui, toggleFullscreen);
-    button('RESTABLECER', X(535), Y(486), 190 * ui, 40 * ui, ui, function () { Object.assign(cfg, CFG_DEF); Sound.applyVol(); saveCfg(); });
-    button('LISTO', X(740), Y(486), 240 * ui, 40 * ui, ui, closeSettings, true);
+    button('PANTALLA COMPLETA', X(300), Y(546), 220 * ui, 40 * ui, ui, toggleFullscreen);
+    button('RESTABLECER', X(535), Y(546), 190 * ui, 40 * ui, ui, function () { const lg = cfg.lang; Object.assign(cfg, CFG_DEF); cfg.lang = lg; Sound.applyVol(); saveCfg(); });
+    button('LISTO', X(740), Y(546), 240 * ui, 40 * ui, ui, closeSettings, true);
   }
   function coinIcon(x, y, r) {
     ctx.save();
